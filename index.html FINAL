@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WilsChat</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; }
+    header { background:#4CAF50; color:#fff; text-align:center; padding:12px; font-size:24px; }
+    #login, #chat { display:flex; flex-direction:column; height:calc(100vh - 70px); margin:10px; background:#fff; border-radius:8px; padding:10px; }
+    #chat { display:none; }
+    input, button { padding:12px; font-size:16px; border-radius:8px; border:1px solid #ccc; margin-top:8px; }
+    button { background:#4CAF50; color:#fff; border:none; cursor:pointer; }
+    #messages { flex:1; border:1px solid #ddd; padding:8px; overflow-y:auto; margin-bottom:8px; }
+    .msg { margin-bottom:6px; padding:6px 10px; border-radius:6px; background:#eee; }
+    .me { background:#c8f7c5; text-align:right; }
+    .meta { font-size:0.8em; color:#666; margin-left:6px; }
+    #users { border:1px solid #ddd; padding:8px; max-height:120px; overflow:auto; margin-bottom:8px; }
+    .system { background:transparent; color:#666; font-style:italic; text-align:center; }
+  </style>
+</head>
+<body>
+  <header>WilsChat</header>
+
+  <div id="login">
+    <h3>Ingresa tu nombre</h3>
+    <input id="username" placeholder="Tu nombre" />
+    <button id="enterBtn">Entrar</button>
+  </div>
+
+  <div id="chat">
+    <div style="display:flex; gap:8px;">
+      <div style="flex:1">
+        <div id="messages" aria-live="polite"></div>
+        <input id="text" placeholder="Escribe un mensaje" />
+        <button id="sendBtn">Enviar</button>
+      </div>
+      <div style="width:200px;">
+        <h4>Conectados</h4>
+        <div id="users"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase v8 CLÁSICO (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script>
+    // Configuración de Firebase (deja tal cual si ya es tu proyecto)
+    var firebaseConfig = {
+      apiKey: "AIzaSyAEkdn1nVDbrJEQY13JrE-peN1JkXrOy24",
+      authDomain: "wilschat-1b27d.firebaseapp.com",
+      databaseURL: "https://wilschat-1b27d-default-rtdb.firebaseio.com",
+      projectId: "wilschat-1b27d",
+      storageBucket: "wilschat-1b27d.appspot.com",
+      messagingSenderId: "550632985900",
+      appId: "1:550632985900:web:c886e89b4330560b6ac889"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+
+    var user = "";
+    var presenceRef = null;
+
+    // Helpers
+    function formatTime(ts) {
+      var d = new Date(ts);
+      return d.toLocaleTimeString();
+    }
+
+    function createMessageElement(m) {
+      var div = document.createElement('div');
+      div.className = 'msg' + (m.user === user ? ' me' : '');
+
+      if (m.system) {
+        div.className += ' system';
+        var textNode = document.createTextNode((m.text || '') + (m.ts ? ' — ' + formatTime(m.ts) : ''));
+        div.appendChild(textNode);
+        return div;
+      }
+
+      var strong = document.createElement('strong');
+      strong.textContent = m.user + ':';
+
+      var spanText = document.createElement('span');
+      spanText.style.marginLeft = '6px';
+      spanText.textContent = m.text;
+
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = (m.ts ? formatTime(m.ts) : '');
+
+      div.appendChild(strong);
+      div.appendChild(spanText);
+      div.appendChild(meta);
+
+      return div;
+    }
+
+    function addMessageToUI(m) {
+      var messages = document.getElementById('messages');
+      var el = createMessageElement(m);
+      messages.appendChild(el);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Login / presencia
+    function entrar() {
+      var input = document.getElementById('username');
+      if (!input.value.trim()) return;
+      user = input.value.trim();
+      localStorage.setItem('wilschat_user', user);
+
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('chat').style.display = 'flex';
+
+      // Crear entrada de presencia y remover al desconectar
+      presenceRef = db.ref('presence').push({ name: user, ts: Date.now() });
+      presenceRef.onDisconnect().remove();
+
+      // Avisar que entró
+      db.ref('mensajes').push({
+        user: 'Sistema',
+        text: user + ' entró al chat',
+        system: true,
+        ts: Date.now()
+      });
+    }
+
+    function enviar() {
+      var textEl = document.getElementById('text');
+      if (!textEl.value.trim()) return;
+
+      db.ref('mensajes').push({
+        user: user,
+        text: textEl.value,
+        ts: Date.now()
+      });
+      textEl.value = '';
+      textEl.focus();
+    }
+
+    // Cargar nombre guardado
+    (function initName() {
+      var saved = localStorage.getItem('wilschat_user');
+      if (saved) document.getElementById('username').value = saved;
+    })();
+
+    // Event listeners de UI
+    document.getElementById('enterBtn').addEventListener('click', entrar);
+    document.getElementById('sendBtn').addEventListener('click', enviar);
+
+    document.getElementById('text').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') enviar();
+    });
+    document.getElementById('username').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') entrar();
+    });
+
+    // Escuchar nuevos mensajes (child_added -> no re-render completo)
+    var msgsRef = db.ref('mensajes').limitToLast(200);
+    msgsRef.on('child_added', function(snapshot) {
+      var m = snapshot.val();
+      if (!m) return;
+      addMessageToUI(m);
+    });
+
+    // Manejar presencia: lista de usuarios conectados
+    var usersRef = db.ref('presence');
+    var usersListEl = document.getElementById('users');
+
+    function renderUsersList(snapshot) {
+      usersListEl.innerHTML = '';
+      snapshot.forEach(function(child) {
+        var d = child.val();
+        var div = document.createElement('div');
+        div.textContent = d.name + (d.ts ? ' · ' + new Date(d.ts).toLocaleTimeString() : '');
+        usersListEl.appendChild(div);
+      });
+    }
+
+    usersRef.on('value', function(snap) {
+      renderUsersList(snap);
+    });
+
+    // Cuando alguien se desconecta (child_removed) mostramos mensaje de salida
+    usersRef.on('child_removed', function(snapshot) {
+      var d = snapshot.val();
+      if (!d) return;
+      db.ref('mensajes').push({
+        user: 'Sistema',
+        text: (d.name || 'Un usuario') + ' salió del chat',
+        system: true,
+        ts: Date.now()
+      });
+    });
+
+    // Manejo de unload: intento de limpieza inmediata
+    window.addEventListener('beforeunload', function() {
+      if (presenceRef) {
+        presenceRef.remove().catch(function(){});
+      }
+    });
+
+    // Nota: el cliente no autentica; considera usar Firebase Authentication para reglas más estrictas.
+  </script>
+</body>
+</html>
