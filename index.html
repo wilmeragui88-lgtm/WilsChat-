@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="es">
 <head>
@@ -18,6 +17,27 @@
     --text-meta: #667781;
 }
 
+/* Mejora: Soporte para Modo Oscuro Automático */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary: #202c33;
+        --primary-dark: #111b21;
+        --accent: #00a884;
+        --bg-chat: #0b141a;
+        --white: #111b21;
+        --gray-light: #202c33;
+        --text-main: #e9edef;
+        --text-meta: #8696a0;
+    }
+    body { background: #0b141a; }
+    #login { background: #222e35; }
+    #chatMenuWindow { background: #222e35; border: 1px solid #3b4a54; }
+    .other { background: #202c33 !important; color: #e9edef; }
+    .me { background: #005c4b !important; color: #e9edef; }
+    #username, #userSearch { background: #2a3942; color: white; border-color: #3b4a54; }
+    .status:hover { background: #2a3942; }
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: #d1d7db; margin: 0; padding: 0; color: var(--text-main);
@@ -25,14 +45,13 @@ body {
 }
 
 header {
-    background: var(--primary); color: var(--white); padding: 10px 16px;
+    background: var(--primary); color: #ffffff; padding: 10px 16px;
     display: flex; justify-content: space-between; align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 1000;
 }
 
 header strong { font-size: 20px; letter-spacing: 0.5px; }
 
-/* Login Mejorado (Más grande y centrado) */
 #login {
     display: flex; flex-direction: column; margin: auto; background: var(--white);
     border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -52,7 +71,6 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 }
 #enterBtn:hover { background: var(--primary-dark); }
 
-/* Menú y Ventana de Usuarios */
 #chatMenuWindow {
     position: fixed; top: 60px; left: 10px; width: 280px; max-height: 80vh;
     background: var(--white); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
@@ -73,7 +91,7 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 .status .avatar {
     width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; 
     align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; flex-shrink: 0;
-    background-size: cover; background-position: center;
+    background-size: cover; background-position: center; position: relative;
 }
 
 #menuBadge {
@@ -81,7 +99,6 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
     width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--primary); display: none;
 }
 
-/* Estructura del Chat */
 #chat { 
     display: none; flex-direction: column; flex: 1; overflow: hidden; 
     width: 100%; max-width: 800px; margin: 0 auto; background: var(--bg-chat);
@@ -112,7 +129,7 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 .controls textarea, #privateControls textarea {
     flex: 1; background: var(--white); border: none; padding: 10px 16px;
     border-radius: 20px; font-size: 15px; max-height: 120px; outline: none;
-    resize: none; font-family: inherit; line-height: 20px;
+    resize: none; font-family: inherit; line-height: 20px; color: var(--text-main);
 }
 
 .btn-round {
@@ -203,6 +220,7 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
   </div>
   <div id="privateMessages"></div>
   <div id="privateControls">
+    <button id="recordBtnPrivate" class="btn-round" style="background:#667781">🎤</button>
     <textarea id="privateText" placeholder="Mensaje privado..." rows="1"></textarea>
     <button id="privateSendBtn" class="btn-round">➤</button>
   </div>
@@ -224,13 +242,26 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
-// (Aquí va toda la lógica JavaScript del mensaje anterior, que se mantiene idéntica)
 var firebaseConfig={apiKey:"AIzaSyAEkdn1nVDbrJEQY13JrE-peN1JkXrOy24",authDomain:"wilschat-1b27d.firebaseapp.com",databaseURL:"https://wilschat-1b27d-default-rtdb.firebaseio.com",projectId:"wilschat-1b27d",storageBucket:"wilschat-1b27d.appspot.com",messagingSenderId:"550632985900",appId:"1:550632985900:web:c886e89b4330560b6ac889"};
 firebase.initializeApp(firebaseConfig);
 
 var db=firebase.database(), storage=firebase.storage();
 var user="", presenceKey=null, currentRef=null, privateWith=null, typingTimeout, selectedFile=null;
 var unreadCounts = {}, userColor = "#128c7e", userAvatar = "", allUsersCached = [];
+
+/* Mejora: Solicitar permisos de notificación al entrar */
+function requestNotifyPermission() {
+    if ("Notification" in window) {
+        Notification.requestPermission();
+    }
+}
+
+function sendNotification(title, body) {
+    if (document.hidden && Notification.permission === "granted") {
+        new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png' });
+        playReceive(); // Sonido incluso si está bloqueado
+    }
+}
 
 function playSend(){ document.getElementById("sndSend").play().catch(()=>{}); }
 function playReceive(){ document.getElementById("sndReceive").play().catch(()=>{}); }
@@ -241,7 +272,14 @@ function autoGrow(el) { el.style.height = "20px"; el.style.height = (el.scrollHe
 
 function addMsg(m, container, msgKey){
   if(!m) return;
-  if(m.user && m.user !== user) playReceive();
+  if(m.user && m.user !== user) {
+      playReceive();
+      if(container.id === "privateMessages") {
+          sendNotification("Nuevo mensaje privado de " + m.user, m.text || "📷 Foto o 🎤 Audio");
+      } else if(container.id === "messages") {
+          sendNotification("Mensaje en el grupo: " + m.user, m.text || "Archivo multimedia");
+      }
+  }
   var div=document.createElement("div"); div.className="msg "+(m.user===user?"me":"other");
   div.id = "m_" + msgKey;
   if(m.system){
@@ -267,6 +305,7 @@ function addMsg(m, container, msgKey){
 
 enterBtn.onclick=function(){
   if(!username.value.trim()) return; user=username.value.trim();
+  requestNotifyPermission();
   userColor = "#"+Math.floor(Math.random()*16777215).toString(16);
   userColorPicker.value = userColor;
   login.style.display="none"; chat.style.display="flex";
@@ -303,6 +342,7 @@ function listenForPrivateNotif(){
                     unreadCounts[m.user] = (unreadCounts[m.user] || 0) + 1;
                     document.getElementById("menuBadge").style.display = "block";
                     updateUsers(); playReceive(); 
+                    sendNotification("Nuevo mensaje de " + m.user, m.text || "Multimedia");
                 }
             });
         }
@@ -390,23 +430,31 @@ closePrivateBtn.onclick=() => {
 
 chatMenuBtn.onclick=() => { let w=document.getElementById("chatMenuWindow"); w.style.display = w.style.display==="block"?"none":"block"; };
 
-let rec,chunks=[];
-recordBtn.onclick=async function(){
-  if(!rec||rec.state==="inactive"){ 
-    try {
-        var st=await navigator.mediaDevices.getUserMedia({audio:true});
-        rec=new MediaRecorder(st); chunks=[]; rec.ondataavailable=e=>chunks.push(e.data);
-        rec.onstop=()=>{ 
-            var b=new Blob(chunks,{type:"audio/webm"}); 
-            var r=storage.ref("audios/"+Date.now()+".webm");
-            r.put(b).then(s=>s.ref.getDownloadURL().then(u=>{ 
-                db.ref("mensajes").push({user:user, type:"audio", url:u, color:userColor, ts:Date.now()}); playSend(); 
-            }));
-        };
-        rec.start(); this.classList.add("recording");
-    } catch(err) { alert("Micrófono no disponible"); }
-  }else{ rec.stop(); this.classList.remove("recording"); }
-};
+let rec, chunks = [];
+async function toggleRecording(btn, isPrivate) {
+    if (!rec || rec.state === "inactive") {
+        try {
+            var st = await navigator.mediaDevices.getUserMedia({ audio: true });
+            rec = new MediaRecorder(st); chunks = [];
+            rec.ondataavailable = e => chunks.push(e.data);
+            rec.onstop = () => {
+                var b = new Blob(chunks, { type: "audio/webm" });
+                var r = storage.ref("audios/" + Date.now() + ".webm");
+                r.put(b).then(s => s.ref.getDownloadURL().then(u => {
+                    let path = isPrivate ? "mensajes_privados/" + chatId(user, privateWith) : "mensajes";
+                    db.ref(path).push({ user: user, type: "audio", url: u, color: userColor, ts: Date.now(), leido: false });
+                    playSend();
+                }));
+            };
+            rec.start(); btn.classList.add("recording");
+        } catch (err) { alert("Micrófono no disponible"); }
+    } else {
+        rec.stop(); btn.classList.remove("recording");
+    }
+}
+
+recordBtn.onclick = function() { toggleRecording(this, false); };
+recordBtnPrivate.onclick = function() { toggleRecording(this, true); };
 
 document.getElementById("text").oninput = function() { autoGrow(this); };
 document.getElementById("privateText").oninput = function() { 
