@@ -33,7 +33,7 @@
     #chatMenuWindow { background: #222e35; border: 1px solid #3b4a54; }
     .other { background: #202c33 !important; color: #e9edef; }
     .me { background: #005c4b !important; color: #e9edef; }
-    #username, #userSearch, #email, #pass { background: #2a3942; color: white; border-color: #3b4a54; }
+    #email, #password, #userSearch { background: #2a3942; color: white; border-color: #3b4a54; }
     .status:hover { background: #2a3942; }
 }
 
@@ -54,22 +54,19 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 #login {
     display: flex; flex-direction: column; margin: auto; background: var(--white);
     border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 90%; max-width: 400px; text-align: center;
+    width: 90%; max-width: 450px; text-align: center;
 }
 #login h2 { margin-top: 0; color: var(--primary); font-size: 28px; margin-bottom: 10px; }
-#login input {
-    padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 16px;
-    margin-bottom: 10px; outline: none; transition: border-color 0.3s;
+#login p { color: var(--text-meta); margin-bottom: 25px; }
+#email, #password {
+    padding: 16px; border: 2px solid #eee; border-radius: 12px; font-size: 16px;
+    margin-bottom: 15px; outline: none; transition: border-color 0.3s;
 }
-#login input:focus { border-color: var(--primary); }
-
-.btn-auth {
-    background: var(--primary); color: white; border: none; padding: 15px;
-    border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer;
-    transition: background 0.3s; margin-top: 5px;
+#enterBtn {
+    background: var(--primary); color: white; border: none; padding: 18px;
+    border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer;
+    transition: background 0.3s;
 }
-.btn-auth:hover { background: var(--primary-dark); }
-#regBtn { background: var(--accent); }
 
 #chatMenuWindow {
     position: fixed; top: 60px; left: 10px; width: 280px; max-height: 80vh;
@@ -87,7 +84,6 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
     display: flex; align-items: center; padding: 10px; border-radius: 8px; cursor: pointer;
     margin-bottom: 2px; transition: background 0.2s;
 }
-.status:hover { background: var(--gray-light); }
 .status .avatar {
     width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; 
     align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; flex-shrink: 0;
@@ -117,9 +113,6 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 .me { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; }
 .other { background: var(--white); align-self: flex-start; border-top-left-radius: 0; }
 
-.msg img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
-.msg audio { max-width: 100%; height: 35px; margin-top: 8px; }
-
 .meta { font-size: 11px; color: var(--text-meta); margin-top: 4px; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
 
 .controls, #privateControls {
@@ -138,13 +131,6 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
     display: flex; align-items: center; justify-content: center; font-size: 18px;
     flex-shrink: 0; transition: 0.2s;
 }
-
-@keyframes pulse-red {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-}
-.recording { animation: pulse-red 1.5s infinite; background: #e74c3c !important; }
 
 #privateChatFull {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -184,16 +170,14 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
         </div>
     </div>
     <div id="usersList"></div>
-    <button onclick="cerrarSesion()" style="width:100%; padding:10px; border:none; background:#e74c3c; color:white; border-radius:8px; cursor:pointer; margin-top:10px;">Cerrar Sesión</button>
 </div>
 
 <div id="login">
-  <h2>Bienvenido</h2>
-  <input type="email" id="email" placeholder="Correo electrónico">
-  <input type="password" id="pass" placeholder="Contraseña">
-  <input type="text" id="username" placeholder="Nombre (solo para registro)">
-  <button id="enterBtn" class="btn-auth">Iniciar Sesión</button>
-  <button id="regBtn" class="btn-auth">Crear Cuenta</button>
+  <h2>¡Bienvenido!</h2>
+  <p>Inicia sesión o regístrate para continuar.</p>
+  <input id="email" type="email" placeholder="Correo electrónico" autocomplete="email">
+  <input id="password" type="password" placeholder="Contraseña (mín. 6 caracteres)">
+  <button id="enterBtn">Entrar / Registrarse</button>
 </div>
 
 <div id="chat">
@@ -235,108 +219,76 @@ header strong { font-size: 20px; letter-spacing: 0.5px; }
 <audio id="sndReceive" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
 <script>
 var firebaseConfig={apiKey:"AIzaSyAEkdn1nVDbrJEQY13JrE-peN1JkXrOy24",authDomain:"wilschat-1b27d.firebaseapp.com",databaseURL:"https://wilschat-1b27d-default-rtdb.firebaseio.com",projectId:"wilschat-1b27d",storageBucket:"wilschat-1b27d.appspot.com",messagingSenderId:"550632985900",appId:"1:550632985900:web:c886e89b4330560b6ac889"};
 firebase.initializeApp(firebaseConfig);
 
 var db=firebase.database(), storage=firebase.storage(), auth=firebase.auth();
-var user="", presenceKey=null, currentRef=null, privateWith=null, typingTimeout, selectedFile=null;
+var user="", myUid="", presenceKey=null, privateWith=null, typingTimeout, selectedFile=null;
 var unreadCounts = {}, userColor = "#128c7e", userAvatar = "", allUsersCached = [];
+var activePrivateRef = null;
 
-// FUNCIONES DE AUTH
-function iniciarSesionChat(uName, uColor, uAvatar) {
-    user = uName; userColor = uColor || "#128c7e"; userAvatar = uAvatar || "";
-    if(userAvatar) { myAvatarDisplay.style.backgroundImage = `url(${userAvatar})`; myAvatarDisplay.textContent = ""; }
-    userColorPicker.value = userColor;
-    login.style.display="none"; chat.style.display="flex";
-    document.getElementById("chatMenuBtn").style.display="block";
-    var ref=db.ref("presence").push({name:user}); presenceKey=ref.key; ref.onDisconnect().remove();
-    requestNotifyPermission(); listenPublic(); listenForPrivateNotif(); updateUsers();
-}
-
-regBtn.onclick = function() {
-    let e = email.value, p = pass.value, n = username.value.trim();
-    if(!e || !p || !n) return alert("Completa todos los campos");
-    auth.createUserWithEmailAndPassword(e, p).then(res => {
-        let data = {name:n, color:"#128c7e", avatar:"", email:e};
-        db.ref("users/"+n).set(data);
-        iniciarSesionChat(n, data.color, data.avatar);
-    }).catch(err => alert(err.message));
-};
-
-enterBtn.onclick = function() {
-    let e = email.value, p = pass.value;
-    if(!e || !p) return alert("Email y Contraseña requeridos");
-    auth.signInWithEmailAndPassword(e, p).then(res => {
-        db.ref("users").orderByChild("email").equalTo(e).once("value", s => {
-            s.forEach(child => {
-                let d = child.val();
-                iniciarSesionChat(d.name, d.color, d.avatar);
-            });
-        });
-    }).catch(err => alert(err.message));
-};
-
-function cerrarSesion() {
-    auth.signOut().then(() => { location.reload(); });
-}
-
-// RESTO DEL CÓDIGO ORIGINAL SIN TOCAR
-function requestNotifyPermission() { if ("Notification" in window) Notification.requestPermission(); }
-function sendNotification(title, body) {
-    if (document.hidden && Notification.permission === "granted") {
-        new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png' });
-        playReceive();
-    }
-}
 function playSend(){ document.getElementById("sndSend").play().catch(()=>{}); }
 function playReceive(){ document.getElementById("sndReceive").play().catch(()=>{}); }
-function chatId(a,b){return [a,b].sort().join("_");}
-function time(ts){return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});}
+function chatId(u1, u2){ return u1 < u2 ? u1 + "_" + u2 : u2 + "_" + u1; }
+function time(ts){ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 function autoGrow(el) { el.style.height = "20px"; el.style.height = (el.scrollHeight) + "px"; }
 
 function addMsg(m, container, msgKey){
   if(!m) return;
-  if(m.user && m.user !== user) {
-      playReceive();
-      if(container.id === "privateMessages") sendNotification("Privado de " + m.user, m.text || "📷 Foto/🎤 Audio");
-  }
-  var div=document.createElement("div"); div.className="msg "+(m.user===user?"me":"other");
+  if(m.uid && m.uid !== myUid) playReceive();
+  var div=document.createElement("div"); div.className="msg "+(m.uid===myUid?"me":"other");
   div.id = "m_" + msgKey;
   if(m.system){
       div.className="system"; div.style.alignSelf="center"; div.style.fontSize="11px";
       div.textContent=m.text+" • "+time(m.ts); container.appendChild(div); 
       container.scrollTop=container.scrollHeight; return;
   }
-  if(m.user === user) {
+  if(m.uid === myUid) {
       div.onclick = () => { if(confirm("¿Eliminar este mensaje?")) {
-          let path = container.id === "messages" ? "mensajes/" : "mensajes_privados/" + chatId(user, privateWith) + "/";
+          let path = container.id === "messages" ? "mensajes/" : "mensajes_privados/" + chatId(myUid, privateWith) + "/";
           db.ref(path + msgKey).remove();
       }};
-  } else if(container.id === "messages") { div.onclick = () => openPrivateFull(m.user); }
+  }
   let uColor = m.color || "#667781";
   let content = `<strong style="color:${uColor}">${m.user}</strong><br>`;
-  if(m.type==="image") content += `<img src="${m.url}" loading="lazy">`;
-  else if(m.type==="audio") content += `<audio controls src="${m.url}"></audio>`;
+  if(m.type==="image") content += `<img src="${m.url}" style="max-width:100%; border-radius:8px;">`;
+  else if(m.type==="audio") content += `<audio controls src="${m.url}" style="max-width:100%; height:35px;"></audio>`;
   else content += m.text.replace(/\n/g, '<br>');
-  let statusStr = (m.user===user && container.id==="privateMessages") ? (m.leido ? " <span style='color:#34b7f1'>✔✔</span>" : " <span style='color:var(--text-meta)'>✔</span>") : "";
+  let statusStr = (m.uid===myUid && container.id==="privateMessages") ? (m.leido ? " <span style='color:#34b7f1'>✔✔</span>" : " <span style='color:var(--text-meta)'>✔</span>") : "";
   div.innerHTML = content + `<div class="meta">${time(m.ts)}${statusStr}</div>`;
   container.appendChild(div); container.scrollTop = container.scrollHeight;
 }
 
-myAvatarDisplay.onclick = () => avatarInput.click();
-avatarInput.onchange = e => {
-    let f = e.target.files[0]; if(!f) return;
-    storage.ref("avatars/"+user).put(f).then(s=>s.ref.getDownloadURL().then(u=>{
-        userAvatar = u; myAvatarDisplay.style.backgroundImage = `url(${u})`;
-        myAvatarDisplay.textContent = ""; db.ref("users/"+user+"/avatar").set(u);
-    }));
-};
-userColorPicker.onchange = (e) => { userColor = e.target.value; db.ref("users/"+user+"/color").set(userColor); };
+enterBtn.onclick = async function() {
+    const mail = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+    if (!mail || pass.length < 6) return alert("Email inválido o contraseña corta");
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(mail, pass);
+        iniciarChat(userCredential.user);
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+            const newUC = await auth.createUserWithEmailAndPassword(mail, pass);
+            iniciarChat(newUC.user);
+        } else alert(error.message);
+    }
+}
+
+function iniciarChat(authUser) {
+    myUid = authUser.uid;
+    user = authUser.email.split('@')[0];
+    userColor = "#"+Math.floor(Math.random()*16777215).toString(16);
+    login.style.display="none"; chat.style.display="flex";
+    document.getElementById("chatMenuBtn").style.display="block";
+    db.ref("users/"+myUid).set({name:user, color:userColor, uid:myUid, avatar: "", lastSeen:Date.now()});
+    var ref=db.ref("presence").push({name:user, uid:myUid}); presenceKey=ref.key; ref.onDisconnect().remove();
+    listenPublic(); listenForPrivateNotif(); updateUsers();
+}
 
 function listenPublic(){
   var container=document.getElementById("messages");
@@ -346,28 +298,26 @@ function listenPublic(){
 
 function listenForPrivateNotif(){
     db.ref("mensajes_privados").on("child_added", (snap) => {
-        if(snap.key.includes(user)){
+        if(snap.key.includes(myUid)){
             snap.ref.limitToLast(1).on("child_added", (mSnap) => {
                 let m = mSnap.val();
-                if(m.user !== user && privateWith !== m.user){
-                    unreadCounts[m.user] = (unreadCounts[m.user] || 0) + 1;
+                if(m.uid !== myUid && privateWith !== m.uid){
+                    unreadCounts[m.uid] = (unreadCounts[m.uid] || 0) + 1;
                     document.getElementById("menuBadge").style.display = "block";
-                    updateUsers(); playReceive(); 
+                    updateUsers(); playReceive();
                 }
             });
         }
     });
 }
 
-userSearch.oninput = function() { renderUserList(this.value.toLowerCase()); };
-
 function updateUsers(){
   db.ref("users").on("value", u => {
     db.ref("presence").on("value", p => {
-      var online=[]; p.forEach(c=>online.push(c.val().name));
+      var online=[]; p.forEach(c=>online.push(c.val().uid));
       allUsersCached = [];
-      u.forEach(c => { if(c.key !== user) {
-            allUsersCached.push({ name: c.key, color: c.val().color || "#075e54", avatar: c.val().avatar || "", isOnline: online.includes(childVal = c.val().name || c.key) });
+      u.forEach(c => { if(c.key !== myUid) {
+            allUsersCached.push({ name: c.val().name, uid: c.key, color: c.val().color, avatar: c.val().avatar, isOnline: online.includes(c.key) });
       }});
       renderUserList();
     });
@@ -378,63 +328,44 @@ function renderUserList(filter = ""){
   var html="<strong style='padding:10px; display:block; color:var(--primary)'>CONTACTOS</strong>";
   allUsersCached.forEach(u => {
     if(u.name.toLowerCase().includes(filter)){
-      let count = unreadCounts[u.name] ? `<span style="background:var(--accent); color:white; border-radius:10px; padding:2px 7px; font-size:11px;">${unreadCounts[u.name]}</span>` : "";
+      let count = unreadCounts[u.uid] ? `<span style="background:var(--accent); color:white; border-radius:10px; padding:2px 7px; font-size:11px;">${unreadCounts[u.uid]}</span>` : "";
       let statusDot = u.isOnline ? "border: 2px solid #25d366;" : "border: 2px solid #ccc;";
       let avatarStyle = u.avatar ? `background-image:url(${u.avatar}); color:transparent;` : `background-color:${u.color};`;
-      html += `<div class="status" onclick="openPrivateFull('${u.name}')">
+      html += `<div class="status" onclick="openPrivateFull('${u.uid}', '${u.name}')">
                 <div class="avatar" style="${avatarStyle} ${statusDot}">${u.name.charAt(0)}</div>
-                <div style="flex:1"><span class="name">${u.name}</span> <small style="display:block; font-size:10px; color:${u.isOnline?'#25d366':'#667781'}">${u.isOnline?'en línea':'desconectado'}</small></div> ${count}
+                <div style="flex:1"><span>${u.name}</span></div> ${count}
              </div>`;
     }
   });
   document.getElementById("usersList").innerHTML = html;
 }
 
-function openPrivateFull(name){
-  privateWith=name; unreadCounts[name] = 0; 
-  if(Object.values(unreadCounts).every(v => v === 0)) document.getElementById("menuBadge").style.display="none";
-  document.getElementById("privateUserName").textContent=name;
+function openPrivateFull(targetUid, targetName){
+  if(activePrivateRef) activePrivateRef.off();
+  privateWith=targetUid; unreadCounts[targetUid] = 0; 
+  document.getElementById("privateUserName").textContent=targetName;
   document.getElementById("privateChatFull").style.display="flex";
   var container=document.getElementById("privateMessages"); container.innerHTML="";
-  let path = "mensajes_privados/" + chatId(user, name);
-  db.ref(path).on("value", snap => { snap.forEach(c => { if(c.val().user === name && !c.val().leido) c.ref.update({leido:true}); }); });
-  db.ref(path).limitToLast(50).on("child_added", s => addMsg(s.val(), container, s.key));
-  db.ref(path).on("child_removed", s => { let el=document.getElementById("m_"+s.key); if(el) el.remove(); });
-  db.ref("typing/"+user+"/"+name).on("value", s => { document.getElementById("typingStatus").textContent = s.exists() ? "escribiendo..." : ""; });
-  updateUsers();
+  let path = "mensajes_privados/" + chatId(myUid, targetUid);
+  activePrivateRef = db.ref(path);
+  activePrivateRef.on("value", snap => { snap.forEach(c => { if(c.val().uid === targetUid && !c.val().leido) c.ref.update({leido:true}); }); });
+  activePrivateRef.limitToLast(50).on("child_added", s => addMsg(s.val(), container, s.key));
 }
 
 sendBtn.onclick=() => {
   let txt=document.getElementById("text"); if(!txt.value.trim()) return;
-  db.ref("mensajes").push({user:user, text:txt.value, color:userColor, ts:Date.now()}); 
-  txt.value=""; txt.style.height="20px"; playSend();
+  db.ref("mensajes").push({user:user, uid:myUid, text:txt.value, color:userColor, ts:Date.now()}); 
+  txt.value=""; playSend();
 };
-
-photoInput.onchange = e => {
-    selectedFile = e.target.files[0]; if(!selectedFile) return;
-    let reader = new FileReader();
-    reader.onload = (ex) => { previewImg.src = ex.target.result; previewModal.style.display = "flex"; };
-    reader.readAsDataURL(selectedFile);
-};
-
-sendPreview.onclick = () => {
-    previewModal.style.display = "none";
-    var r=storage.ref("photos/"+Date.now()+selectedFile.name); 
-    r.put(selectedFile).then(s=>s.ref.getDownloadURL().then(u=>{
-        db.ref("mensajes").push({user:user, type:"image", url:u, color:userColor, ts:Date.now()}); 
-        playSend(); photoInput.value="";
-    }));
-};
-cancelPreview.onclick = () => { previewModal.style.display="none"; photoInput.value=""; };
 
 privateSendBtn.onclick=() => {
   let txt=document.getElementById("privateText"); if(!txt.value.trim()||!privateWith) return;
-  db.ref("mensajes_privados/"+chatId(user,privateWith)).push({user:user, text:txt.value, color:userColor, ts:Date.now(), leido:false}); 
-  db.ref("typing/"+privateWith+"/"+user).remove(); txt.value=""; txt.style.height="20px"; playSend();
+  db.ref("mensajes_privados/"+chatId(myUid,privateWith)).push({user:user, uid:myUid, text:txt.value, color:userColor, ts:Date.now(), leido:false}); 
+  txt.value=""; playSend();
 };
 
 closePrivateBtn.onclick=() => { 
-  if(privateWith) { db.ref("typing/"+privateWith+"/"+user).remove(); db.ref("typing/"+user+"/"+privateWith).off(); db.ref("mensajes_privados/"+chatId(user,privateWith)).off(); }
+  if(activePrivateRef) activePrivateRef.off();
   document.getElementById("privateChatFull").style.display="none"; privateWith=null; 
 };
 
@@ -451,28 +382,20 @@ async function toggleRecording(btn, isPrivate) {
                 var b = new Blob(chunks, { type: "audio/webm" });
                 var r = storage.ref("audios/" + Date.now() + ".webm");
                 r.put(b).then(s => s.ref.getDownloadURL().then(u => {
-                    let path = isPrivate ? "mensajes_privados/" + chatId(user, privateWith) : "mensajes";
-                    db.ref(path).push({ user: user, type: "audio", url: u, color: userColor, ts: Date.now(), leido: false });
+                    let path = isPrivate ? "mensajes_privados/" + chatId(myUid, privateWith) : "mensajes";
+                    db.ref(path).push({ user: user, uid:myUid, type: "audio", url: u, color: userColor, ts: Date.now(), leido: false });
                     playSend();
                 }));
             };
-            rec.start(); btn.classList.add("recording");
+            rec.start(); btn.style.background="red";
         } catch (err) { alert("Micrófono no disponible"); }
     } else {
-        rec.stop(); btn.classList.remove("recording");
+        rec.stop(); btn.style.background="#667781";
     }
 }
+
 recordBtn.onclick = function() { toggleRecording(this, false); };
 recordBtnPrivate.onclick = function() { toggleRecording(this, true); };
-document.getElementById("text").oninput = function() { autoGrow(this); };
-document.getElementById("privateText").oninput = function() { 
-    autoGrow(this); if (!privateWith) return;
-    db.ref("typing/"+privateWith+"/"+user).set(true);
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => { if (privateWith) db.ref("typing/"+privateWith+"/"+user).remove(); }, 2000);
-};
-document.getElementById("text").onkeydown = e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendBtn.click(); } };
-document.getElementById("privateText").onkeydown = e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); privateSendBtn.click(); } };
 </script>
 </body>
 </html>
